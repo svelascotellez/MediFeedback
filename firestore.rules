@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: surveys
+    // Document ID: auto-generated
+    // Fields:
+    //   - patientName: string (required)
+    //   - patientId: string (optional)
+    //   - timestamp: timestamp (required)
+    //   - responses: list (required)
+    //     - questionId: string
+    //     - questionText: string
+    //     - transcript: string
+    //     - sentiment: string
+    //     - score: number
+    //   - overallSentiment: string
+    //   - overallScore: number
+    //   - status: string (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isRecent(ts) {
+      return ts > request.time - duration.value(5, 'm') && ts <= request.time;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "salvador.velasco@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidSurvey(data) {
+      let allowedFields = ['patientName', 'patientId', 'timestamp', 'responses', 'overallSentiment', 'overallScore', 'status', 'insights'];
+      return data.keys().hasOnly(allowedFields) &&
+             data.patientName is string && data.patientName.size() > 0 && data.patientName.size() < 100 &&
+             data.timestamp is timestamp && isRecent(data.timestamp) &&
+             data.responses is list && data.responses.size() <= 10 &&
+             data.status in ['completed', 'pending'] &&
+             (!('overallScore' in data) || (data.overallScore is number && data.overallScore >= 1 && data.overallScore <= 5)) &&
+             (!('overallSentiment' in data) || (data.overallSentiment in ["Muy positivo", "Positivo", "Neutral", "Negativo", "Muy negativo"])) &&
+             (!('insights' in data) || (data.insights is string && data.insights.size() < 1000));
+    }
+
+    match /surveys/{surveyId} {
+      // Allow creation without authentication to support patients when anonymous auth is disabled
+      // Strict validation is enforced via isValidSurvey
+      allow create: if isValidSurvey(request.resource.data);
+      
+      // Admins can read and manage all surveys
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+  }
+}
