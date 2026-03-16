@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Mic, Square, Loader2 } from 'lucide-react';
+import { Mic, Square, Loader2, AlertCircle } from 'lucide-react';
 
 interface AudioRecorderProps {
   onRecordingComplete: (base64: string, mimeType: string) => void;
@@ -8,10 +8,12 @@ interface AudioRecorderProps {
 
 export const AudioRecorder = ({ onRecordingComplete, isProcessing }: AudioRecorderProps) => {
   const [isRecording, setIsRecording] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
 
   const startRecording = async () => {
+    setError(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorder.current = new MediaRecorder(stream);
@@ -35,7 +37,7 @@ export const AudioRecorder = ({ onRecordingComplete, isProcessing }: AudioRecord
       setIsRecording(true);
     } catch (err) {
       console.error("Error accessing microphone:", err);
-      alert("Please allow microphone access to record your response.");
+      setError("No pudimos acceder al micrófono. Por favor, asegúrate de dar los permisos necesarios.");
     }
   };
 
@@ -66,9 +68,17 @@ export const AudioRecorder = ({ onRecordingComplete, isProcessing }: AudioRecord
           <Mic className="w-10 h-10 text-white" />
         )}
       </button>
-      <p className="text-sm font-medium text-slate-500">
-        {isProcessing ? 'Procesando respuesta...' : isRecording ? 'Escuchando... Toca para detener' : 'Toca para responder'}
-      </p>
+      
+      {error ? (
+        <div className="flex items-center gap-2 text-red-500 bg-red-50 px-4 py-2 rounded-xl text-sm border border-red-100 animate-in fade-in slide-in-from-top-1">
+          <AlertCircle className="w-4 h-4" />
+          {error}
+        </div>
+      ) : (
+        <p className="text-sm font-medium text-slate-500">
+          {isProcessing ? 'Procesando respuesta...' : isRecording ? 'Escuchando... Toca para detener' : 'Toca para responder'}
+        </p>
+      )}
     </div>
   );
 };

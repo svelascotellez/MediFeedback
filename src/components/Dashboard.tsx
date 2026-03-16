@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
-import { Users, Star, MessageSquare, TrendingUp, Calendar, RefreshCw } from 'lucide-react';
+import { Users, Star, MessageSquare, TrendingUp, Calendar, RefreshCw, ChevronDown } from 'lucide-react';
 
 import { FullDataTable } from './FullDataTable';
+import { DashboardSkeleton } from './Skeleton';
 
 const COLORS = ['#059669', '#34d399', '#fbbf24', '#f87171', '#dc2626'];
 
@@ -16,21 +17,28 @@ export const Dashboard = () => {
   const [surveys, setSurveys] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     setIsSyncing(true);
-    const q = query(collection(db, 'surveys'), orderBy('timestamp', 'desc'));
+    // Pedimos uno más del límite para saber si hay más páginas
+    const q = query(collection(db, 'surveys'), orderBy('timestamp', 'desc'), limit(pageSize + 1));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const docs = snapshot.docs;
+      setHasMore(docs.length > pageSize);
+      
+      const data = docs.slice(0, pageSize).map(doc => ({ id: doc.id, ...doc.data() }));
       setSurveys(data);
       setLoading(false);
       setIsSyncing(false);
     }, (error) => {
       console.error("Snapshot error:", error);
+      setLoading(false);
       setIsSyncing(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [pageSize]);
 
   const stats = {
     total: surveys.length,
@@ -52,7 +60,7 @@ export const Dashboard = () => {
 
   const recentActivity = surveys.slice(0, 5);
 
-  if (loading) return <div className="p-8 text-center">Cargando dashboard...</div>;
+  if (loading) return <DashboardSkeleton />;
 
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
@@ -189,6 +197,19 @@ export const Dashboard = () => {
 
         {/* Full Data Table Section */}
         <FullDataTable surveys={surveys} />
+
+        {/* Load More Button */}
+        {hasMore && (
+          <div className="mt-8 flex justify-center pb-10">
+            <button 
+              onClick={() => setPageSize(prev => prev + 10)}
+              className="flex items-center gap-2 bg-white text-indigo-600 px-8 py-3 rounded-2xl font-bold border border-indigo-100 shadow-sm hover:bg-indigo-50 transition-all group"
+            >
+              <ChevronDown className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" />
+              Cargar más registros
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { SurveyFlow } from './components/SurveyFlow';
 import { Dashboard } from './components/Dashboard';
-import { auth, initAnonymousAuth } from './firebase';
+import { auth, initAnonymousAuth, db } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { LogIn, LogOut, LayoutDashboard, ClipboardList, AlertTriangle, Loader2 } from 'lucide-react';
 
 export default function App() {
@@ -35,7 +36,19 @@ export default function App() {
     setAuthError(null);
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      
+      // Registrar al usuario en la colección 'users' de forma segura
+      if (result.user) {
+        await setDoc(doc(db, 'users', result.user.uid), {
+          displayName: result.user.displayName,
+          email: result.user.email,
+          photoURL: result.user.photoURL,
+          lastLogin: serverTimestamp(),
+        }, { merge: true });
+        
+        // El rol 'admin' debe ser asignado manualmente en la base de datos por seguridad
+      }
     } catch (error: any) {
       console.error("Login failed:", error);
       if (error.code === 'auth/popup-blocked') {
