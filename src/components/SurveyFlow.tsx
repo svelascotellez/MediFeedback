@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AudioRecorder } from './AudioRecorder';
-import { transcribeAndAnalyze, analyzeOverallSession } from '../services/gemini';
+import { transcribeAndAnalyze, analyzeOverallSession, analyzeText, getAIProvider } from '../services/gemini';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { CheckCircle2, User, AlertCircle } from 'lucide-react';
+import { CheckCircle2, User, AlertCircle, Loader2, Mic, MicOff } from 'lucide-react';
 
 const QUESTIONS = [
   { id: 'q1', text: '¿Cómo calificaría la atención recibida por el personal médico?' },
@@ -19,6 +19,48 @@ export const SurveyFlow = () => {
   const [patientName, setPatientName] = useState('');
   const [responses, setResponses] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [globalError, setGlobalError] = useState<string | null>(null);
+  const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
+  const [textInput, setTextInput] = useState('');
+  const [isListening, setIsListening] = useState(false);
+
+  // Lógica para reconocimiento de voz nativo del navegador (Web Speech API)
+  const startLocalSpeechRecognition = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setGlobalError("Tu navegador no soporta reconocimiento de voz local. Por favor usa el modo texto o Gemini.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'es-MX';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    
+    recognition.onresult = async (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setIsProcessing(true);
+      try {
+        const analysis = await analyzeText(transcript);
+        processResponse(transcript, analysis);
+      } catch (error: any) {
+        setGlobalError(error.message);
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+      setGlobalError(`Error de voz: ${event.error}`);
+    };
+
+    recognition.start();
+  };
 
   const handleStart = () => {
     if (patientName.trim()) {
@@ -26,37 +68,73 @@ export const SurveyFlow = () => {
     }
   };
 
+  const processResponse = (transcript: string, analysis: any) => {
+    const question = QUESTIONS[currentQuestionIndex];
+    const newResponse = {
+      questionId: question.id,
+      questionText: question.text,
+      transcript,
+      ...analysis
+    };
+
+    const updatedResponses = [...responses, newResponse];
+    setResponses(updatedResponses);
+    setTextInput('');
+
+    if (currentQuestionIndex < QUESTIONS.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      finishSurvey(updatedResponses);
+    }
+  };
+
+  const handleTextSubmit = async () => {
+    if (!textInput.trim() || isProcessing) return;
+    setIsProcessing(true);
+    setGlobalError(null);
+    try {
+      const analysis = await analyzeText(textInput);
+      processResponse(textInput, analysis);
+    } catch (error: any) {
+      setGlobalError(error.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleRecordingComplete = async (base64: string, mimeType: string) => {
     setIsProcessing(true);
+    setGlobalError(null);
     try {
       const question = QUESTIONS[currentQuestionIndex];
       const analysis = await transcribeAndAnalyze(base64, mimeType, question.text);
-      
-      const newResponse = {
-        questionId: question.id,
-        questionText: question.text,
-        ...analysis
-      };
-
-      const updatedResponses = [...responses, newResponse];
-      setResponses(updatedResponses);
-
-      if (currentQuestionIndex < QUESTIONS.length - 1) {
-        setCurrentQuestionIndex(prev => prev + 1);
-      } else {
-        await finishSurvey(updatedResponses);
-      }
-    } catch (error) {
+      processResponse(analysis.transcript, { sentiment: analysis.sentiment, score: analysis.score });
+    } catch (error: any) {
       console.error("Error processing response:", error);
+      setGlobalError(error.message || "Error al procesar la respuesta. Verifica tu conexión.");
     } finally {
       setIsProcessing(false);
     }
   };
 
   const finishSurvey = async (finalResponses: any[]) => {
+    setIsProcessing(true);
+    setGlobalError(null);
     try {
-      const transcripts = finalResponses.map(r => r.transcript);
-      const overall = await analyzeOverallSession(transcripts);
+      let overall = { 
+        overallSentiment: 'Pendiente', 
+        overallScore: 0, 
+        insights: 'El análisis automático se realizará más tarde.' 
+      };
+
+      try {
+        const transcripts = finalResponses.map(r => r.transcript);
+        const result = await analyzeOverallSession(transcripts);
+        overall = result;
+      } catch (analysisError) {
+        console.warn("Could not generate overall analysis, saving survey with partial data:", analysisError);
+        // No lanzamos el error para permitir que la encuesta se guarde
+      }
 
       const surveyData = {
         patientName,
@@ -66,15 +144,13 @@ export const SurveyFlow = () => {
         status: 'completed'
       };
 
-      try {
-        await addDoc(collection(db, 'surveys'), surveyData);
-        setStep('finished');
-      } catch (error) {
-        handleFirestoreError(error, OperationType.CREATE, 'surveys');
-      }
-    } catch (error) {
+      await addDoc(collection(db, 'surveys'), surveyData);
+      setStep('finished');
+    } catch (error: any) {
       console.error("Error saving survey:", error);
-      throw error; // Let ErrorBoundary handle it or show local error
+      setGlobalError("No se pudo guardar la encuesta. Por favor, intente de nuevo.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -131,10 +207,75 @@ export const SurveyFlow = () => {
               </h3>
             </div>
 
-            <AudioRecorder 
-              onRecordingComplete={handleRecordingComplete} 
-              isProcessing={isProcessing}
-            />
+            <div className="flex justify-center gap-4 mb-8">
+              <button 
+                onClick={() => setInputMode('voice')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${inputMode === 'voice' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+              >
+                Voz
+              </button>
+              <button 
+                onClick={() => setInputMode('text')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${inputMode === 'text' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+              >
+                Texto
+              </button>
+            </div>
+
+            {inputMode === 'voice' ? (
+              getAIProvider() === 'lmstudio' ? (
+                <div className="flex flex-col items-center gap-6">
+                  <button
+                    onClick={startLocalSpeechRecognition}
+                    disabled={isProcessing || isListening}
+                    className={`w-24 h-24 rounded-full flex items-center justify-center transition-all ${
+                      isListening 
+                        ? 'bg-red-500 shadow-lg shadow-red-200 animate-pulse' 
+                        : 'bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100'
+                    } disabled:opacity-50`}
+                  >
+                    {isListening ? <MicOff className="w-10 h-10 text-white" /> : <Mic className="w-10 h-10 text-white" />}
+                  </button>
+                  <p className="text-sm font-medium text-slate-500">
+                    {isListening ? "Escuchando..." : "Haz clic para dictar tu respuesta localmente"}
+                  </p>
+                  {isProcessing && (
+                    <div className="flex items-center gap-2 text-indigo-600 font-medium">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Analizando con LM Studio...
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <AudioRecorder 
+                  onRecordingComplete={handleRecordingComplete} 
+                  isProcessing={isProcessing}
+                />
+              )
+            ) : (
+              <div className="space-y-4">
+                <textarea
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  placeholder="Escriba su respuesta aquí..."
+                  className="w-full p-4 rounded-2xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none h-32 resize-none text-slate-700"
+                />
+                <button
+                  onClick={handleTextSubmit}
+                  disabled={!textInput.trim() || isProcessing}
+                  className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Siguiente'}
+                </button>
+              </div>
+            )}
+
+            {globalError && (
+              <div className="mt-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm animate-in fade-in slide-in-from-top-2">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <p className="text-left font-medium">{globalError}</p>
+              </div>
+            )}
 
             <div className="mt-12 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
               <motion.div 

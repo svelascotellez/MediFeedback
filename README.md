@@ -52,7 +52,15 @@ Crea un archivo `.env.local` en la raíz del proyecto:
 GEMINI_API_KEY="TU_CLAVE_DE_API_AQUÍ"
 ```
 
-### 4. Configuración de Firebase
+### 4. Configuración de IA (Opcional: LM Studio)
+El sistema permite alternar entre **Gemini** (Nube) y **LM Studio** (Local):
+- Por defecto usa Gemini para todo.
+- Si activas **LM Studio** en la interfaz:
+  - Gemini seguirá encargándose de la **transcripción** (audio a texto).
+  - LM Studio se encargará del **análisis clínico** y generación de insights.
+  - Asegúrate de tener LM Studio corriendo con el servidor local en `http://localhost:1234`.
+
+### 5. Configuración de Firebase
 Para que el inicio de sesión funcione localmente:
 1. Ve a la [Consola de Firebase](https://console.firebase.google.com/).
 2. Selecciona tu proyecto (`gen-lang-client-...`).

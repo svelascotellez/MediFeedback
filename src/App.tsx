@@ -4,7 +4,8 @@ import { Dashboard } from './components/Dashboard';
 import { auth, initAnonymousAuth, db } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { LogIn, LogOut, LayoutDashboard, ClipboardList, AlertTriangle, Loader2 } from 'lucide-react';
+import { LogIn, LogOut, LayoutDashboard, ClipboardList, AlertTriangle, Loader2, Cpu, Sparkles } from 'lucide-react';
+import { getAIProvider, setAIProvider, AIProvider } from './services/gemini';
 
 export default function App() {
   const [view, setView] = useState<'patient' | 'admin'>('patient');
@@ -12,6 +13,13 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [provider, setProvider] = useState<AIProvider>(getAIProvider());
+
+  const toggleProvider = () => {
+    const next = provider === 'gemini' ? 'lmstudio' : 'gemini';
+    setProvider(next);
+    setAIProvider(next);
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -70,11 +78,26 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
       <nav className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold">M</span>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold">M</span>
+            </div>
+            <span className="text-xl font-bold text-slate-900 tracking-tight">MediFeedback</span>
           </div>
-          <span className="text-xl font-bold text-slate-900 tracking-tight">MediFeedback</span>
+
+          <button 
+            onClick={toggleProvider}
+            title={`Usando ${provider}. Clic para cambiar.`}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+              provider === 'gemini' 
+                ? 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100' 
+                : 'bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-100'
+            }`}
+          >
+            {provider === 'gemini' ? <Sparkles className="w-3.5 h-3.5" /> : <Cpu className="w-3.5 h-3.5" />}
+            {provider === 'gemini' ? 'Gemini AI' : 'LM Studio'}
+          </button>
         </div>
         
         <div className="flex items-center gap-4">
