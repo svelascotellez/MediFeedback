@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, limit, getCountFromServer } from 'firebase/firestore';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell
@@ -19,12 +19,14 @@ export const Dashboard = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [pageSize, setPageSize] = useState(10);
   const [hasMore, setHasMore] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     setIsSyncing(true);
-    // Pedimos uno más del límite para saber si hay más páginas
+    
+    // 1. Snapshot para los datos de la tabla (paginados)
     const q = query(collection(db, 'surveys'), orderBy('timestamp', 'desc'), limit(pageSize + 1));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribeData = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs;
       setHasMore(docs.length > pageSize);
       
@@ -33,15 +35,27 @@ export const Dashboard = () => {
       setLoading(false);
       setIsSyncing(false);
     }, (error) => {
-      console.error("Snapshot error:", error);
+      console.error("Snapshot data error:", error);
       setLoading(false);
       setIsSyncing(false);
     });
-    return () => unsubscribe();
+
+    // 2. Obtener el conteo total real de la base de datos
+    const fetchTotalCount = async () => {
+      try {
+        const snapshot = await getCountFromServer(collection(db, 'surveys'));
+        setTotalCount(snapshot.data().count);
+      } catch (error) {
+        console.error("Error fetching total count:", error);
+      }
+    };
+    fetchTotalCount();
+
+    return () => unsubscribeData();
   }, [pageSize]);
 
   const stats = {
-    total: surveys.length,
+    total: totalCount || surveys.length,
     avgScore: surveys.reduce((acc, s) => acc + (s.overallScore || 0), 0) / (surveys.length || 1),
     veryPositiveCount: surveys.filter(s => s.overallSentiment?.toLowerCase() === 'muy positivo').length,
     positiveCount: surveys.filter(s => s.overallSentiment?.toLowerCase() === 'positivo').length,

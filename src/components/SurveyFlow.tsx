@@ -121,10 +121,8 @@ export const SurveyFlow = () => {
     setIsProcessing(true);
     setGlobalError(null);
     try {
-      let overall = { 
-        overallSentiment: 'Pendiente', 
-        overallScore: 0, 
-        insights: 'El análisis automático se realizará más tarde.' 
+      let overall: any = { 
+        insights: 'El análisis automático no se pudo completar en este momento.' 
       };
 
       try {
@@ -133,7 +131,6 @@ export const SurveyFlow = () => {
         overall = result;
       } catch (analysisError) {
         console.warn("Could not generate overall analysis, saving survey with partial data:", analysisError);
-        // No lanzamos el error para permitir que la encuesta se guarde
       }
 
       const surveyData = {
@@ -148,7 +145,8 @@ export const SurveyFlow = () => {
       setStep('finished');
     } catch (error: any) {
       console.error("Error saving survey:", error);
-      setGlobalError("No se pudo guardar la encuesta. Por favor, intente de nuevo.");
+      // Si falla el guardado final, informamos al usuario
+      setGlobalError("Error al guardar la encuesta en la base de datos. Por favor, intente enviarla de nuevo.");
     } finally {
       setIsProcessing(false);
     }

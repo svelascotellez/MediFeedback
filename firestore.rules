@@ -45,7 +45,7 @@ service cloud.firestore {
              data.responses is list && data.responses.size() <= 10 &&
              data.status in ['completed', 'pending'] &&
              (!('overallScore' in data) || (data.overallScore is number && data.overallScore >= 1 && data.overallScore <= 5)) &&
-             (!('overallSentiment' in data) || (data.overallSentiment in ["Muy positivo", "Positivo", "Neutral", "Negativo", "Muy negativo"])) &&
+             (!('overallSentiment' in data) || (data.overallSentiment in ["Muy positivo", "Positivo", "Neutral", "Negativo", "Muy negativo", "Pendiente"])) &&
              (!('insights' in data) || (data.insights is string && data.insights.size() < 1000));
     }
 
