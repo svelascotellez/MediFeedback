@@ -53,8 +53,11 @@ service cloud.firestore {
       // Strict validation is enforced via isValidSurvey
       allow create: if isValidSurvey(request.resource.data);
       
-      // Admins can read and manage all surveys
-      allow read, update, delete: if isAdmin();
+      // Allow public read for the dashboard prototype
+      allow read: if true;
+
+      // Only admins can update or delete
+      allow update, delete: if isAdmin();
     }
 
     match /users/{userId} {
