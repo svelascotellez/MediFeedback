@@ -7,10 +7,12 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { CheckCircle2, User, AlertCircle, Loader2, Mic, MicOff } from 'lucide-react';
 
 const QUESTIONS = [
-  { id: 'q1', text: '¿Cómo calificaría la atención recibida por el personal médico?' },
-  { id: 'q2', text: '¿Qué le pareció el tiempo de espera antes de su consulta?' },
-  { id: 'q3', text: '¿Las instalaciones le parecieron limpias y adecuadas?' },
-  { id: 'q4', text: '¿Tiene algún comentario adicional o sugerencia para mejorar nuestro servicio?' }
+  { id: 'q1', text: '¿Bajo qué esquema se encuentra asegurado actualmente en el IMSS?' },
+  { id: 'q2', text: '¿Cuál es el estado actual de su residencia?' },
+  { id: 'q3', text: '¿Ha viajado a México específicamente para recibir atención médica en el IMSS?' },
+  { id: 'q4', text: '¿Qué tipo de servicio utilizó en su última visita?' },
+  { id: 'q5', text: '¿Cómo ha evolucionado la calidad de los servicios del IMSS en los últimos 3 años?' },
+  { id: 'q6', text: '¿Qué cambios le gustaría ver en el IMSS?' }
 ];
 
 export const SurveyFlow = () => {

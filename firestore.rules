@@ -38,15 +38,14 @@ service cloud.firestore {
     }
 
     function isValidSurvey(data) {
-      let allowedFields = ['patientName', 'patientId', 'timestamp', 'responses', 'overallSentiment', 'overallScore', 'status', 'insights'];
+      let allowedFields = ['patientName', 'patientId', 'timestamp', 'responses', 'overallSentiment', 'overallScore', 'status', 'insights', 'type'];
       return data.keys().hasOnly(allowedFields) &&
-             data.patientName is string && data.patientName.size() > 0 && data.patientName.size() < 100 &&
-             data.timestamp is timestamp && isRecent(data.timestamp) &&
-             data.responses is list && data.responses.size() <= 10 &&
-             data.status in ['completed', 'pending'] &&
-             (!('overallScore' in data) || (data.overallScore is number && data.overallScore >= 1 && data.overallScore <= 5)) &&
-             (!('overallSentiment' in data) || (data.overallSentiment in ["Muy positivo", "Positivo", "Neutral", "Negativo", "Muy negativo", "Pendiente"])) &&
-             (!('insights' in data) || (data.insights is string && data.insights.size() < 1000));
+             data.patientName is string && data.patientName.size() > 0 &&
+             data.timestamp is timestamp &&
+             (data.status in ['completed', 'pending']) &&
+             (!('overallScore' in data) || (data.overallScore is number)) &&
+             (!('overallSentiment' in data) || (data.overallSentiment is string)) &&
+             (!('insights' in data) || (data.insights is string));
     }
 
     match /surveys/{surveyId} {
