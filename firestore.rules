@@ -56,8 +56,8 @@ service cloud.firestore {
       // Allow public read for the dashboard prototype
       allow read: if true;
 
-      // Only admins can update or delete
-      allow update, delete: if isAdmin();
+      // Allow public update and delete for the dashboard prototype
+      allow update, delete: if true;
     }
 
     match /users/{userId} {

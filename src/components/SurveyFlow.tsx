@@ -12,7 +12,8 @@ const QUESTIONS = [
   { id: 'q3', text: '¿Ha viajado a México específicamente para recibir atención médica en el IMSS?' },
   { id: 'q4', text: '¿Qué tipo de servicio utilizó en su última visita?' },
   { id: 'q5', text: '¿Cómo ha evolucionado la calidad de los servicios del IMSS en los últimos 3 años?' },
-  { id: 'q6', text: '¿Qué cambios le gustaría ver en el IMSS?' }
+  { id: 'q6', text: '¿Qué cambios le gustaría ver en el IMSS?' },
+  { id: 'q7', text: '¿Tienes algún comentario?' }
 ];
 
 export const SurveyFlow = () => {

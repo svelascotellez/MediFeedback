@@ -9,18 +9,18 @@ MediFeedback es una plataforma inteligente que moderniza la recolección de retr
 ## ✨ Características Principales
 
 ### 🎙️ Encuestas por Voz (Patient Experience)
-- **Zero Typing**: El paciente responde a las preguntas simplemente hablando.
-- **Transcripción Inteligente**: Utiliza Gemini para convertir audio a texto con alta precisión.
+- **Modalidades Flexibles**: El paciente puede responder a las 7 preguntas utilizando el micrófono o escribiendo en modo texto.
+- **Transcripción Inteligente**: Utiliza Gemini o reconocimiento de voz local (Web Speech API) para convertir audio a texto con alta precisión.
 - **Análisis de Sentimiento Inmediato**: Cada respuesta se califica automáticamente (Muy positivo, Positivo, Neutral, Negativo, Muy negativo).
 
 ### 📊 Dashboard de Análisis (Hospital Backoffice)
 - **Visualización en Tiempo Real**: Gráficos interactivos de distribución de satisfacción.
 - **AI Insights**: Resúmenes automáticos generados por IA que condensan la opinión de múltiples pacientes.
-- **Paginación y Rendimiento**: Capacidad para manejar grandes volúmenes de datos mediante carga bajo demanda.
+- **Gestión de Datos Total**: Tabla completa con paginación, búsqueda, y borrado individual/masivo de registros.
 
 ### 🔒 Seguridad de Grado Médico
-- **Reglas de Firestore Estrictas**: Validación robusta de esquemas de datos.
-- **Control de Acceso**: Gestión de administradores a través de Firebase Authentication y colecciones seguras.
+- **Reglas de Firestore Estrictas**: Validación robusta de esquemas de datos al crear encuestas.
+- **Modo Prototipo Activo**: Actualmente configurado para permitir lectura y borrado público en el Dashboard para facilitar las pruebas.
 
 ## 🛠️ Stack Tecnológico
 
@@ -81,15 +81,14 @@ npm run dev
 2. Haga clic en el micrófono para grabar la respuesta a cada pregunta.
 3. Al finalizar, los datos se procesan y analizan automáticamente.
 
-### Acceso Administrativo
-1. Haga clic en **Admin Login** e inicie sesión con su cuenta de Google.
-2. Para acceder al Dashboard, su usuario debe tener asignado el rol de `admin` en la colección `users` de Firestore.
-   - *Nota: Por seguridad, el primer login registra al usuario, pero el rol de admin se asigna manualmente en la base de datos.*
+### Acceso al Dashboard
+1. Navega a la vista del Dashboard. Como el sistema está en **modo prototipo**, las reglas permiten que cualquier usuario lea y gestione (borre) los datos.
+2. Desde la tabla inferior puedes expandir detalles de AI, buscar encuestas y borrar uno, varios o todos los registros.
 
 ## 🛡️ Reglas de Seguridad (Firestore)
 El archivo `firestore.rules` garantiza que:
-- Solo se creen encuestas que cumplan con el formato exacto.
-- Solo los administradores verificados puedan leer o borrar datos.
+- Solo se creen encuestas que cumplan con el formato exacto de preguntas.
+- **Atención**: En esta versión de prototipo, las reglas permiten que cualquier usuario *lea y borre* datos del dashboard libremente. Para un entorno de producción, vuelva a activar la función `isAdmin()`.
 
 ---
 
