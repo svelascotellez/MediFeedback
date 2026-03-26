@@ -1,0 +1,5 @@
+{
+  "name": "MediFeedback",
+  "description": "Patient satisfaction survey app with voice responses, AI transcription, and sentiment analysis dashboard.",
+  "requestFramePermissions": ["microphone"]
+}

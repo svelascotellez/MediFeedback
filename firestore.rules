@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: surveys
+    // Document ID: auto-generated
+    // Fields:
+    //   - patientName: string (required)
+    //   - patientId: string (optional)
+    //   - timestamp: timestamp (required)
+    //   - responses: list (required)
+    //     - questionId: string
+    //     - questionText: string
+    //     - transcript: string
+    //     - sentiment: string
+    //     - score: number
+    //   - overallSentiment: string
+    //   - overallScore: number
+    //   - status: string (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isRecent(ts) {
+      return ts > request.time - duration.value(5, 'm') && ts <= request.time;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+
+    function isValidSurvey(data) {
+      let allowedFields = ['patientName', 'patientId', 'timestamp', 'responses', 'questions', 'overallSentiment', 'overallScore', 'status', 'insights', 'type'];
+      return data.keys().hasOnly(allowedFields) &&
+             data.patientName is string && data.patientName.size() > 0 &&
+             data.timestamp is timestamp &&
+             (data.status in ['completed', 'pending']) &&
+             (!('overallScore' in data) || (data.overallScore is number)) &&
+             (!('overallSentiment' in data) || (data.overallSentiment is string)) &&
+             (!('insights' in data) || (data.insights is string));
+    }
+
+    match /surveys/{surveyId} {
+      // Allow creation without authentication to support patients when anonymous auth is disabled
+      // Strict validation is enforced via isValidSurvey
+      allow create: if isValidSurvey(request.resource.data);
+      
+      // Allow public read for the dashboard prototype
+      allow read: if true;
+
+      // Only admins can update or delete
+      allow update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía de Usuario - MediFeedback Dynamic</title>
+    <style>
+        :root {
+            --imss-green: #13322b;
+            --imss-gold: #9d2449; /* Guinda IMSS */
+            --imss-light: #f4f4f4;
+            --accent: #21c08b;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: var(--imss-light);
+        }
+        .container {
+            max-width: 850px;
+            margin: 20px auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        header {
+            border-bottom: 4px solid var(--imss-green);
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo-placeholder {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--imss-green);
+        }
+        h1 { color: var(--imss-green); margin: 0; font-size: 28px; }
+        h2 { color: var(--imss-gold); border-left: 5px solid var(--imss-gold); padding-left: 15px; margin-top: 30px; }
+        h3 { color: var(--imss-green); margin-top: 20px; }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: white;
+            background: var(--imss-green);
+        }
+        .step {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border-left: 5px solid var(--accent);
+        }
+        .warning {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            padding: 15px;
+            border-radius: 10px;
+            color: #c53030;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        th { background: #f8f9fa; color: var(--imss-green); }
+
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        @media print {
+            body { background: white; }
+            .container { box-shadow: none; margin: 0; width: 100%; max-width: 100%; }
+            .no-print { display: none; }
+        }
+        
+        .button-print {
+            background: var(--imss-green);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <button class="no-print button-print" onclick="window.print()">🖨️ Descarcar / Imprimir PDF</button>
+
+    <header>
+        <div>
+            <h1>MediFeedback Dynamic</h1>
+            <p>Guía Rápida de Operación y Configuración</p>
+        </div>
+        <div class="logo-placeholder">IMSS</div>
+    </header>
+
+    <p>Esta guía proporciona las instrucciones necesarias para operar la versión dinámica del sistema de retroalimentación de pacientes, diseñada para capturar insights profundos mediante Inteligencia Artificial.</p>
+
+    <h2>🚀 Inicio Rápido</h2>
+    <div class="step">
+        <strong>1. Acceso al Sistema:</strong> Abra su navegador en la dirección asignada (Ej: <code>http://localhost:3002</code> o la IP de su servidor).
+    </div>
+    <div class="step">
+        <strong>2. Selección de Motor:</strong> En la parte superior derecha, asegúrese de que esté seleccionado <strong>"LM Studio"</strong> si desea procesar los datos de forma local y privada.
+    </div>
+    <div class="step">
+        <strong>3. Recolección de Datos:</strong> Ingrese el nombre del paciente e inicie la encuesta. La IA generará preguntas basadas en las respuestas del paciente.
+    </div>
+
+    <h2>🧠 Inteligencia Artificial</h2>
+    <p>El sistema cuenta con un modelo híbrido para garantizar que la encuesta nunca se detenga:</p>
+    <ul>
+        <li><strong>Modo Dinámico:</strong> La IA analiza la respuesta y profundiza en quejas o sugerencias en tiempo real.</li>
+        <li><strong>Modo Fallback:</strong> Si el servidor de IA no responde, el sistema cambia automáticamente a un guion de 7 preguntas obligatorias predefinidas.</li>
+    </ul>
+
+    <h2>📋 Temas Obligatorios Cubiertos</h2>
+    <table>
+        <tr>
+            <th>#</th>
+            <th>Pregunta Base</th>
+            <th>Objetivo</th>
+        </tr>
+        <tr><td>1</td><td>Esquema de Aseguramiento</td><td>Identificar el tipo de derechohabiente.</td></tr>
+        <tr><td>2</td><td>Residencia Actual</td><td>Ubicación geográfica del paciente.</td></tr>
+        <tr><td>3</td><td>Turismo Médico</td><td>Detectar si viajó específicamente por atención.</td></tr>
+        <tr><td>4</td><td>Servicio Utilizado</td><td>Área de atención (Urgencias, Consulta, etc).</td></tr>
+        <tr><td>5</td><td>Evolución de Calidad</td><td>Comparativa de los últimos 3 años.</td></tr>
+        <tr><td>6</td><td>Cambios Deseados</td><td>Propuestas de mejora directa.</td></tr>
+        <tr><td>7</td><td>Comentario final</td><td>Espacio libre para cualquier otra opinión.</td></tr>
+    </table>
+
+    <h2>📊 Reportes y Exportación</h2>
+    <p>Para extraer los resultados acumulados:</p>
+    <ol>
+        <li>Vaya a la sección <strong>Dashboard</strong>.</li>
+        <li>Use los filtros de <strong>Calendario</strong> para seleccionar un rango de fechas.</li>
+        <li>Haga clic en el botón <strong>"Exportar Excel"</strong>. El archivo resultante incluirá la conversación completa detallada pregunta por pregunta.</li>
+    </ol>
+
+    <div class="warning">
+        <strong>⚠️ Nota sobre el Micrófono:</strong> Si usa una dirección IP segura (HTTP), debe habilitar la bandera <code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code> y agregar la IP del servidor para permitir el uso del micrófono.
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2026 MediFeedback System - Generado por Antigravity AI</p>
+        <p>Documentación Confidencial para personal del IMSS</p>
+    </div>
+</div>
+
+</body>
+</html>

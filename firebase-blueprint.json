@@ -1,0 +1,38 @@
+{
+  "entities": {
+    "SurveySession": {
+      "title": "Survey Session",
+      "description": "A collection of responses from a single patient visit survey.",
+      "type": "object",
+      "properties": {
+        "patientName": { "type": "string", "description": "Name of the patient" },
+        "patientId": { "type": "string", "description": "Unique ID for the patient" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the survey was taken" },
+        "responses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "questionId": { "type": "string" },
+              "questionText": { "type": "string" },
+              "transcript": { "type": "string" },
+              "sentiment": { "type": "string", "enum": ["positive", "neutral", "negative"] },
+              "score": { "type": "number", "description": "Sentiment score from 1 to 5" }
+            },
+            "required": ["questionId", "questionText", "transcript"]
+          }
+        },
+        "overallSentiment": { "type": "string" },
+        "overallScore": { "type": "number" },
+        "status": { "type": "string", "enum": ["completed", "pending"] }
+      },
+      "required": ["patientName", "timestamp", "responses", "status"]
+    }
+  },
+  "firestore": {
+    "surveys": {
+      "schema": "SurveySession",
+      "description": "Collection of patient survey sessions"
+    }
+  }
+}
